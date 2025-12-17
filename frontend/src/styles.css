@@ -38,18 +38,19 @@ body {
 
 .mood-block {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   align-items: center;
-  padding: 10px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
 }
 
 .mood-block img {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+  width: 120px;
+  height: 120px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   object-fit: cover;
 }
@@ -63,6 +64,7 @@ body {
 .mood-line {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-weight: 700;
   color: #e5e7eb;
