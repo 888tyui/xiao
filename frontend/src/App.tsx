@@ -74,6 +74,7 @@ export default function App() {
   const [tokenAnalysis, setTokenAnalysis] = useState<string | null>(null);
   const [freeMessagesLeft, setFreeMessagesLeft] = useState<number | null>(null);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [moodKey, setMoodKey] = useState<keyof typeof moodMap>('neutral');
   const chatInputRef = useRef<HTMLInputElement>(null);
   const tokenInputRef = useRef<HTMLInputElement>(null);
@@ -137,6 +138,7 @@ export default function App() {
 
       if (data.requireWallet) {
         setRequireWallet(true);
+        setShowWalletModal(true);
         return;
       }
 
@@ -152,6 +154,7 @@ export default function App() {
     } catch (err: any) {
       if (err?.response?.data?.requireWallet) {
         setRequireWallet(true);
+        setShowWalletModal(true);
       } else {
         setError(err?.response?.data?.error || 'Something went wrong.');
       }
@@ -212,6 +215,7 @@ export default function App() {
 
       if (data.requireWallet) {
         setRequireWallet(true);
+        setShowWalletModal(true);
         return;
       }
 
@@ -233,6 +237,7 @@ export default function App() {
     } catch (err: any) {
       if (err?.response?.data?.requireWallet) {
         setRequireWallet(true);
+        setShowWalletModal(true);
       } else {
         setError(err?.response?.data?.error || 'Failed to analyze token.');
       }
@@ -283,7 +288,7 @@ export default function App() {
             </button>
           </div>
           <div className="pill-info">
-            {freeMessagesLeft !== null ? `Free chats left: ${freeMessagesLeft}` : 'Welcome'}
+            {freeMessagesLeft !== null ? `Demo chats left: ${freeMessagesLeft}` : 'Welcome'}
           </div>
         </div>
       </aside>
@@ -403,6 +408,21 @@ export default function App() {
             ) : (
               <div className="empty">No analysis yet. Run an analysis after fetching info.</div>
             )}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {requireWallet && showWalletModal && (
+      <div className="modal-backdrop" onClick={() => setShowWalletModal(false)}>
+        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="card-header">
+            <div className="eyebrow">Wallet Required</div>
+            <div className="muted">Connect to continue after 5 free chats.</div>
+          </div>
+          <div className="modal-actions">
+            <button className="primary" onClick={connectWallet}>Connect Wallet</button>
+            <button className="soft" onClick={() => setShowWalletModal(false)}>Close</button>
           </div>
         </div>
       </div>
