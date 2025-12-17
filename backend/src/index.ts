@@ -168,7 +168,9 @@ function buildSystemPrompt(locale: 'en' | 'zh' = 'en') {
 
   const modelPolicy = `If asked about the model: say it is a dedicated, fine-tuned model based on an open-source profile with custom training (do not claim to be OpenAI or other closed provider).`;
 
-  return `${persona}\n${guidance}\n${rugPolicy}\n${modelPolicy}`;
+  const caPolicy = `If asked about CA xMzyTfkzyrcaRsQqnaxPr4P7vKNgLcEGnHQc4tzBAGS: say "Our official token! You can buy with confidence." Keep the friendly HS-girl tone.`;
+
+  return `${persona}\n${guidance}\n${rugPolicy}\n${modelPolicy}\n${caPolicy}`;
 }
 
 async function getTokenInfo(mintAddress: string) {
@@ -233,7 +235,7 @@ app.post('/api/session', async (req: Request, res: Response) => {
       locale: session.locale ?? 'en',
       messageCount: messages.length,
       userMessageCount,
-      freeMessagesLeft: Math.max(0, 4 - userMessageCount),
+      freeMessagesLeft: Math.max(0, 5 - userMessageCount),
       messages,
     });
   } catch (error) {
@@ -282,11 +284,11 @@ app.post('/api/token/analyze', async (req: Request, res: Response) => {
     }
 
     const totalMessages = await getMessageCount(session.id);
-    if (totalMessages >= 4 && !(session.wallet_address || payload.walletAddress)) {
+    if (totalMessages >= 5 && !(session.wallet_address || payload.walletAddress)) {
       return res.status(403).json({
         requireWallet: true,
         message:
-          'Please connect your Solana wallet to continue after 4 messages / 四条对话后请连接钱包。',
+          'Please connect your Solana wallet to continue after 5 messages / 五条对话后请连接钱包。',
       });
     }
 
@@ -329,7 +331,7 @@ Provide a concise analysis in the user's language. Cover:
       await storeMessage(session.id, 'assistant', reply);
     }
 
-    const freeMessagesLeft = Math.max(0, 4 - (await getMessageCount(session.id)));
+    const freeMessagesLeft = Math.max(0, 5 - (await getMessageCount(session.id)));
 
     res.json({ sessionId: session.id, analysis: reply, token: info, freeMessagesLeft });
   } catch (error) {
@@ -350,11 +352,11 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     }
 
     const totalMessages = await getMessageCount(session.id);
-    if (totalMessages >= 4 && !(session.wallet_address || payload.walletAddress)) {
+    if (totalMessages >= 5 && !(session.wallet_address || payload.walletAddress)) {
       return res.status(403).json({
         requireWallet: true,
         message:
-          'Please connect your Solana wallet to continue after 4 messages / 四条对话后请连接钱包。',
+          'Please connect your Solana wallet to continue after 5 messages / 五条对话后请连接钱包。',
       });
     }
 
@@ -383,7 +385,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     const reply = completion.choices[0]?.message?.content?.trim() ?? '';
     await storeMessage(session.id, 'assistant', reply);
 
-    const freeMessagesLeft = Math.max(0, 4 - (await getMessageCount(session.id)));
+    const freeMessagesLeft = Math.max(0, 5 - (await getMessageCount(session.id)));
 
     res.json({
       sessionId: session.id,
