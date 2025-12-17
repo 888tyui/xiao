@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type ChatMessage = {
@@ -38,8 +38,6 @@ function timestampLabel(date?: string) {
   return new Date(date).toLocaleTimeString();
 }
 
-const gradientBg = 'linear-gradient(135deg, #0f172a 0%, #111827 40%, #1f2937 100%)';
-
 export default function App() {
   const { t, i18n } = useTranslation();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -56,6 +54,8 @@ export default function App() {
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
   const [tokenAnalysis, setTokenAnalysis] = useState<string | null>(null);
   const [freeMessagesLeft, setFreeMessagesLeft] = useState<number | null>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const tokenInputRef = useRef<HTMLInputElement>(null);
 
   const mood = useMemo(() => {
     if (requireWallet) return moodMap.alert;
@@ -164,26 +164,28 @@ export default function App() {
     }
   }
 
-  async function fetchTokenInfo() {
-    if (!tokenMint.trim()) return;
+  async function fetchTokenInfo(mintOverride?: string) {
+    const mint = (mintOverride ?? tokenMint).trim();
+    if (!mint) return;
     setError(null);
     setTokenAnalysis(null);
     try {
-      const { data } = await axios.get<TokenInfo>(`${API_BASE}/api/token/${tokenMint.trim()}`);
+      const { data } = await axios.get<TokenInfo>(`${API_BASE}/api/token/${mint}`);
       setTokenInfo(data);
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Failed to fetch token info.');
     }
   }
 
-  async function analyzeToken() {
-    if (!tokenMint.trim()) return;
+  async function analyzeToken(mintOverride?: string) {
+    const mint = (mintOverride ?? tokenMint).trim();
+    if (!mint) return;
     setLoading(true);
     setTokenAnalysis(null);
     setError(null);
     try {
       const { data } = await axios.post(`${API_BASE}/api/token/analyze`, {
-        mint: tokenMint.trim(),
+        mint,
         sessionId: sessionId || undefined,
         locale: language,
         walletAddress,
@@ -197,6 +199,7 @@ export default function App() {
       setRequireWallet(false);
       setSessionId(data.sessionId);
       localStorage.setItem('sessionId', data.sessionId);
+      setTokenMint(mint);
       setTokenAnalysis(data.analysis);
       setMessages((prev) => [
         ...prev,
@@ -218,59 +221,122 @@ export default function App() {
     }
   }
 
+  function quickPrompt(text: string) {
+    setInput(text);
+    chatInputRef.current?.focus();
+  }
+
+  function quickMint(mint: string) {
+    setTokenMint(mint);
+    tokenInputRef.current?.focus();
+  }
+
+  const quickTiles = [
+    {
+      title: 'Check a token',
+      desc: 'Get supply, decimals, and top holders fast.',
+      action: () => {
+        quickMint('So11111111111111111111111111111111111111112');
+        fetchTokenInfo('So11111111111111111111111111111111111111112');
+      },
+    },
+    {
+      title: 'Analyze risk',
+      desc: 'Bilingual analysis with risk notes.',
+      action: () => {
+        const mint = tokenMint || 'So11111111111111111111111111111111111111112';
+        quickMint(mint);
+        analyzeToken(mint);
+      },
+    },
+    {
+      title: 'Continue chat',
+      desc: 'Ask about a token or strategy in EN/中文.',
+      action: () => quickPrompt('Give me a bilingual view on SOL token activity.'),
+    },
+    {
+      title: 'Connect wallet',
+      desc: 'Unlock after 4 free user messages.',
+      action: () => connectWallet(),
+    },
+  ];
+
   const assistantMessages = messages.filter((m) => m.role === 'assistant');
 
   return (
-    <div className="page" style={{ backgroundImage: gradientBg }}>
-      <div className="chrome">
-        <header className="header">
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">✦ xiaoyue</div>
+        <nav className="nav">
+          <button className="nav-item active">Home</button>
+          <button className="nav-item">Chat</button>
+          <button className="nav-item">Token Intel</button>
+          <button className="nav-item">History</button>
+        </nav>
+        <div className="sidebar-footer">
+          <div className="pill-info">
+            {freeMessagesLeft !== null ? `Free chats left: ${freeMessagesLeft}` : 'Welcome'}
+          </div>
+          <div className="status-line">
+            <span className="dot" style={{ background: mood.color }} />
+            {language === 'zh' ? mood.labelZh : mood.label}
+          </div>
+        </div>
+      </aside>
+
+      <div className="content">
+        <header className="topbar">
           <div>
-            <div className="eyebrow">xiaoyue.world</div>
-            <h1>{t('title')}</h1>
-            <p className="subtitle">{t('subtitle')}</p>
-            <p className="hint">
-              {t('chatHistory')} {freeMessagesLeft !== null && t('freeMessages', { count: freeMessagesLeft })}
+            <div className="eyebrow">Cybernetic Agent · EN / 中文</div>
+            <h1>How can xiaoyue help today?</h1>
+            <p className="subtext">
+              Ask about Solana tokens, bilingual analysis, and chat. Wallet connect after 4 free user
+              messages.
             </p>
           </div>
-          <div className="controls">
-            <div className="language-toggle">
-              <span>{t('language')}</span>
-              <div className="pill">
-                <button
-                  className={language === 'en' ? 'active' : ''}
-                  onClick={() => setLanguage('en')}
-                >
-                  EN
-                </button>
-                <button
-                  className={language === 'zh' ? 'active' : ''}
-                  onClick={() => setLanguage('zh')}
-                >
-                  中文
-                </button>
-              </div>
+          <div className="top-actions">
+            <div className="pill lang-pill">
+              <button
+                className={language === 'en' ? 'active' : ''}
+                onClick={() => setLanguage('en')}
+              >
+                EN
+              </button>
+              <button
+                className={language === 'zh' ? 'active' : ''}
+                onClick={() => setLanguage('zh')}
+              >
+                中文
+              </button>
             </div>
-            <button className="ghost" onClick={connectWallet}>
+            <button className="soft" onClick={connectWallet}>
               {walletAddress ? shortAddress(walletAddress) : t('connectWallet')}
             </button>
           </div>
         </header>
 
-        <main className="grid">
-          <section className="panel chat">
-            <div className="panel-header">
+        <section className="hero">
+          <div className="spark" />
+          <p>Start with a suggested action or type your own prompt below.</p>
+        </section>
+
+        <section className="suggestions">
+          {quickTiles.map((tile) => (
+            <button key={tile.title} className="suggest-card" onClick={tile.action}>
+              <div className="eyebrow">{tile.title}</div>
+              <div className="suggest-desc">{tile.desc}</div>
+            </button>
+          ))}
+        </section>
+
+        <section className="main-grid">
+          <div className="card chat-card">
+            <div className="card-header">
               <div>
-                <div className="eyebrow">{t('mood')}</div>
-                <div className="mood" style={{ color: mood.color }}>
-                  <span className="dot" style={{ background: mood.color }} />
-                  {language === 'zh' ? mood.labelZh : mood.label}
-                </div>
+                <div className="eyebrow">Chat</div>
+                <div className="muted">{t('chatHistory')}</div>
               </div>
-              {requireWallet && (
-                <div className="badge warning">
-                  {t('walletNeeded')}
-                </div>
-              )}
+              {requireWallet && <div className="badge warning">{t('walletNeeded')}</div>}
             </div>
 
             <div className="messages">
@@ -287,12 +353,13 @@ export default function App() {
                 </div>
               ))}
               {messages.length === 0 && (
-                <div className="empty">Send a message to wake xiaoyue.</div>
+                <div className="empty">Say hi to xiaoyue to begin.</div>
               )}
             </div>
 
             <div className="composer">
               <input
+                ref={chatInputRef}
                 value={input}
                 disabled={loading}
                 onChange={(e) => setInput(e.target.value)}
@@ -310,82 +377,85 @@ export default function App() {
             </div>
 
             {error && <div className="error">{error}</div>}
-          </section>
+          </div>
 
-          <section className="panel side">
-            <div className="agent-card">
+          <div className="card side-card">
+            <div className="agent-block">
               <img src="/agent-placeholder.svg" alt="xiaoyue mood" />
-              <div className="agent-meta">
+              <div>
                 <div className="eyebrow">Agent</div>
-                <div className="nameplate">
+                <div className="agent-name">
                   <span>晓月</span>
-                  <span className="status-dot" style={{ background: mood.color }} />
+                  <span className="dot" style={{ background: mood.color }} />
                 </div>
-                <p>{assistantMessages.at(-1)?.content ?? 'Ready for your next prompt.'}</p>
+                <p className="muted">
+                  {assistantMessages.at(-1)?.content ?? 'Ready for your next prompt.'}
+                </p>
               </div>
             </div>
 
-            <div className="stack">
-              <div className="panel-light">
-                <div className="panel-header">
-                  <div className="eyebrow">{t('tokenPanel')}</div>
-                </div>
-                <div className="token-actions">
-                  <input
-                    value={tokenMint}
-                    onChange={(e) => setTokenMint(e.target.value)}
-                    placeholder={t('tokenPlaceholder')}
-                  />
-                  <div className="token-buttons">
-                    <button onClick={fetchTokenInfo}>{t('fetchInfo')}</button>
-                    <button onClick={analyzeToken} disabled={loading}>
-                      {t('analyze')}
-                    </button>
-                  </div>
-                </div>
-                {tokenInfo && (
-                  <div className="token-card">
-                    <div className="row">
-                      <span>Mint</span>
-                      <span className="mono">{shortAddress(tokenInfo.mint)}</span>
-                    </div>
-                    <div className="row">
-                      <span>Supply</span>
-                      <span className="mono">{tokenInfo.uiAmountString}</span>
-                    </div>
-                    <div className="row">
-                      <span>Decimals</span>
-                      <span className="mono">{tokenInfo.decimals}</span>
-                    </div>
-                    <div className="holders">
-                      <span>Top holders</span>
-                      <ul>
-                        {tokenInfo.largestHolders.map((h) => (
-                          <li key={h.address}>
-                            <span className="mono">{shortAddress(h.owner || h.address)}</span>
-                            <span className="mono">{h.amount ?? 0}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="timestamp">{tokenInfo.lastUpdated}</div>
-                  </div>
-                )}
+            <div className="card-section">
+              <div className="card-header">
+                <div className="eyebrow">{t('tokenPanel')}</div>
+                <span className="muted">Solana RPC</span>
               </div>
-
-              <div className="panel-light">
-                <div className="panel-header">
-                  <div className="eyebrow">{t('analysisPanel')}</div>
+              <div className="token-actions">
+                <input
+                  ref={tokenInputRef}
+                  value={tokenMint}
+                  onChange={(e) => setTokenMint(e.target.value)}
+                  placeholder={t('tokenPlaceholder')}
+                />
+                <div className="token-buttons">
+                  <button onClick={() => fetchTokenInfo()}>{t('fetchInfo')}</button>
+                  <button onClick={() => analyzeToken()} disabled={loading}>
+                    {t('analyze')}
+                  </button>
                 </div>
-                {tokenAnalysis ? (
-                  <div className="analysis">{tokenAnalysis}</div>
-                ) : (
-                  <div className="empty">No analysis yet. Run an analysis after fetching info.</div>
-                )}
               </div>
+              {tokenInfo && (
+                <div className="token-card">
+                  <div className="row">
+                    <span>Mint</span>
+                    <span className="mono">{shortAddress(tokenInfo.mint)}</span>
+                  </div>
+                  <div className="row">
+                    <span>Supply</span>
+                    <span className="mono">{tokenInfo.uiAmountString}</span>
+                  </div>
+                  <div className="row">
+                    <span>Decimals</span>
+                    <span className="mono">{tokenInfo.decimals}</span>
+                  </div>
+                  <div className="holders">
+                    <span>Top holders</span>
+                    <ul>
+                      {tokenInfo.largestHolders.map((h) => (
+                        <li key={h.address}>
+                          <span className="mono">{shortAddress(h.owner || h.address)}</span>
+                          <span className="mono">{h.amount ?? 0}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="timestamp">{tokenInfo.lastUpdated}</div>
+                </div>
+              )}
             </div>
-          </section>
-        </main>
+
+            <div className="card-section">
+              <div className="card-header">
+                <div className="eyebrow">{t('analysisPanel')}</div>
+                <span className="muted">EN / 中文</span>
+              </div>
+              {tokenAnalysis ? (
+                <div className="analysis">{tokenAnalysis}</div>
+              ) : (
+                <div className="empty">No analysis yet. Run an analysis after fetching info.</div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
