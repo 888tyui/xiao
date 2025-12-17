@@ -265,7 +265,15 @@ export default function App() {
           <button className="soft wide-btn" onClick={() => window.open('https://x.com/xiaoyue_agent', '_blank')}>
             Twitter
           </button>
-          <button className="soft wide-btn" onClick={() => setShowTokenModal(true)}>
+          <button
+            className="soft wide-btn"
+            onClick={() =>
+              window.open(
+                'https://bags.fm/xMzyTfkzyrcaRsQqnaxPr4P7vKNgLcEGnHQc4tzBAGS',
+                '_blank',
+              )
+            }
+          >
             $XIAOYUE
           </button>
         </div>
