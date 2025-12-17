@@ -257,7 +257,7 @@ export default function App() {
           </div>
         </div>
         <div className="social-buttons">
-          <button className="soft wide-btn" onClick={() => window.open('https://twitter.com/', '_blank')}>
+          <button className="soft wide-btn" onClick={() => window.open('https://x.com/xiaoyue_agent', '_blank')}>
             Twitter
           </button>
           <button className="soft wide-btn" onClick={() => setShowTokenModal(true)}>
