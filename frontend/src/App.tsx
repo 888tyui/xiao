@@ -256,6 +256,14 @@ export default function App() {
             </div>
           </div>
         </div>
+        <div className="social-buttons">
+          <button className="soft wide-btn" onClick={() => window.open('https://twitter.com/', '_blank')}>
+            Twitter
+          </button>
+          <button className="soft wide-btn" onClick={() => setShowTokenModal(true)}>
+            $XIAOYUE
+          </button>
+        </div>
         <div className="sidebar-footer">
           <button className="primary" onClick={connectWallet}>
             {walletAddress ? shortAddress(walletAddress) : t('connectWallet')}
