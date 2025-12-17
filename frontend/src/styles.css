@@ -2,6 +2,7 @@
   color-scheme: light;
   font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   background: #f6f7fb;
+  letter-spacing: -0.01em;
 }
 
 * {
@@ -95,10 +96,14 @@ body {
 }
 
 .content {
-  padding: 28px 32px 36px;
+  padding: 20px 24px 28px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.content-compact {
+  padding-top: 8px;
 }
 
 .topbar {
@@ -187,92 +192,6 @@ button:hover:not(:disabled) {
   color: #fff;
 }
 
-button {
-  border: none;
-  border-radius: 14px;
-  padding: 10px 16px;
-  background: linear-gradient(120deg, #6e59e6, #7fc2ff);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 30px rgba(110, 89, 230, 0.25);
-}
-
-.soft {
-  background: #ecf0f7;
-  color: #0f172a;
-  border: 1px solid #d9dfec;
-}
-
-.hero {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 22px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 8px 25px rgba(17, 24, 39, 0.04);
-}
-
-.spark {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: radial-gradient(circle at 30% 30%, #7fc2ff, #6e59e6 70%);
-  box-shadow: 0 10px 30px rgba(110, 89, 230, 0.28);
-}
-
-.hero p {
-  margin: 0;
-  color: #4b5563;
-}
-
-.suggestions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.suggest-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 14px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #111827;
-  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.04);
-}
-
-.suggest-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 30px rgba(110, 89, 230, 0.1);
-}
-
-.suggest-desc {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.main-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 16px;
-}
-
 .chat-card.full {
   width: 100%;
 }
@@ -319,7 +238,7 @@ button:hover:not(:disabled) {
 }
 
 .messages.tall {
-  height: 60vh;
+  height: calc(100vh - 200px);
 }
 
 .message {

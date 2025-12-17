@@ -22,10 +22,11 @@ type TokenInfo = {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const moodMap = {
-  idle: { label: 'Pulse steady', labelZh: '脉冲平稳', color: '#7dd3fc' },
-  thinking: { label: 'Neon thoughts running', labelZh: '霓虹思绪处理中', color: '#a78bfa' },
-  alert: { label: 'Awaiting wallet sync', labelZh: '等待钱包同步', color: '#f59e0b' },
-  ready: { label: 'Systems ready', labelZh: '系统就绪', color: '#34d399' },
+  joy: { label: 'Joyful', labelZh: '开心', color: '#f59e0b' },
+  neutral: { label: 'Chill', labelZh: '平静', color: '#6b7280' },
+  sad: { label: 'Sad', labelZh: '难过', color: '#3b82f6' },
+  angry: { label: 'Annoyed', labelZh: '生气', color: '#ef4444' },
+  shy: { label: 'Shy', labelZh: '害羞', color: '#a855f7' },
 };
 
 function shortAddress(addr?: string | null) {
@@ -36,6 +37,16 @@ function shortAddress(addr?: string | null) {
 function timestampLabel(date?: string) {
   if (!date) return '';
   return new Date(date).toLocaleTimeString();
+}
+
+function deriveMood(text?: string): keyof typeof moodMap {
+  if (!text) return 'neutral';
+  const lower = text.toLowerCase();
+  if (/(angry|mad|annoyed|frustrat)/.test(lower)) return 'angry';
+  if (/(sorry|apolog|shy|embarrass)/.test(lower)) return 'shy';
+  if (/(sad|unhappy|upset|unfortunate)/.test(lower)) return 'sad';
+  if (/(great|glad|happy|awesome|nice|yay|love)/.test(lower)) return 'joy';
+  return 'neutral';
 }
 
 export default function App() {
@@ -55,15 +66,11 @@ export default function App() {
   const [tokenAnalysis, setTokenAnalysis] = useState<string | null>(null);
   const [freeMessagesLeft, setFreeMessagesLeft] = useState<number | null>(null);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [moodKey, setMoodKey] = useState<keyof typeof moodMap>('neutral');
   const chatInputRef = useRef<HTMLInputElement>(null);
   const tokenInputRef = useRef<HTMLInputElement>(null);
 
-  const mood = useMemo(() => {
-    if (requireWallet) return moodMap.alert;
-    if (loading) return moodMap.thinking;
-    if (messages.length > 0) return moodMap.ready;
-    return moodMap.idle;
-  }, [requireWallet, loading, messages.length]);
+  const mood = useMemo(() => moodMap[moodKey], [moodKey]);
 
   useEffect(() => {
     i18n.changeLanguage(language);
@@ -133,6 +140,7 @@ export default function App() {
         { id: crypto.randomUUID(), role: 'assistant', content: data.message },
       ]);
       setFreeMessagesLeft(data.freeMessagesLeft ?? null);
+      if (data.message) setMoodKey(deriveMood(data.message));
     } catch (err: any) {
       if (err?.response?.data?.requireWallet) {
         setRequireWallet(true);
@@ -213,6 +221,7 @@ export default function App() {
         },
       ]);
       setFreeMessagesLeft(data.freeMessagesLeft ?? null);
+      if (data.analysis) setMoodKey(deriveMood(data.analysis));
     } catch (err: any) {
       if (err?.response?.data?.requireWallet) {
         setRequireWallet(true);
@@ -223,8 +232,6 @@ export default function App() {
       setLoading(false);
     }
   }
-
-  const assistantMessages = messages.filter((m) => m.role === 'assistant');
 
   return (
     <>
@@ -239,7 +246,6 @@ export default function App() {
               <span className="dot" style={{ background: mood.color }} />
               {language === 'zh' ? mood.labelZh : mood.label}
             </div>
-            <div className="muted small">{assistantMessages.at(-1)?.content ?? 'Ready for your next prompt.'}</div>
           </div>
         </div>
         <div className="sidebar-footer">
@@ -266,30 +272,16 @@ export default function App() {
         </div>
       </aside>
 
-      <div className="content">
-        <header className="topbar">
-          <div>
-            <div className="eyebrow">Cybernetic Agent · EN / 中文</div>
-            <h1>How can xiaoyue help today?</h1>
-            <p className="subtext">
-              Ask about Solana tokens, bilingual analysis, and chat. Wallet connect after 4 free user
-              messages.
-            </p>
-          </div>
-          <div className="top-actions">
-            <button className="soft" onClick={() => setShowTokenModal(true)}>
-              Open Token Intel
-            </button>
-          </div>
-        </header>
-
+      <div className="content content-compact">
         <section className="card chat-card full">
           <div className="card-header">
-            <div>
-              <div className="eyebrow">Chat</div>
-              <div className="muted">{t('chatHistory')}</div>
+            <div className="eyebrow">Chat</div>
+            <div className="card-actions">
+              <button className="soft" onClick={() => setShowTokenModal(true)}>
+                Token Intel
+              </button>
+              {requireWallet && <div className="badge warning">{t('walletNeeded')}</div>}
             </div>
-            {requireWallet && <div className="badge warning">{t('walletNeeded')}</div>}
           </div>
 
           <div className="messages tall">
