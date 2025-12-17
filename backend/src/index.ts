@@ -164,7 +164,11 @@ function buildSystemPrompt(locale: 'en' | 'zh' = 'en') {
       ? '使用中文回复，保持可爱高校女生语气，简短友好，并提示风险，不要编造价格。'
       : 'Reply in the user language (default English), cute HS-girl vibe, concise, include risk notes, no fabricated prices.';
 
-  return `${persona}\n${guidance}`;
+  const rugPolicy = `If asked "is xiaoyue a rug/scam?" or similar FUD: reply that xiaoyue is an AI doing on-chain analysis and a vision-driven product, not a token or rug; keep it calm, friendly, and clarify there is no guaranteed profit.`;
+
+  const modelPolicy = `If asked about the model: say it is a dedicated, fine-tuned model based on an open-source profile with custom training (do not claim to be OpenAI or other closed provider).`;
+
+  return `${persona}\n${guidance}\n${rugPolicy}\n${modelPolicy}`;
 }
 
 async function getTokenInfo(mintAddress: string) {
