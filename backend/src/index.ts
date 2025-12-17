@@ -61,21 +61,21 @@ type MessageRow = {
 const sessionSchema = z.object({
   sessionId: z.string().uuid().optional(),
   locale: z.enum(['en', 'zh']).optional(),
-  walletAddress: z.string().optional(),
+  walletAddress: z.string().optional().nullable(),
 });
 
 const chatSchema = z.object({
   sessionId: z.string().uuid().optional(),
   prompt: z.string().min(1, 'Prompt cannot be empty'),
   locale: z.enum(['en', 'zh']).optional(),
-  walletAddress: z.string().optional(),
+  walletAddress: z.string().optional().nullable(),
 });
 
 const tokenAnalyzeSchema = z.object({
   sessionId: z.string().uuid().optional(),
   mint: z.string().min(1, 'Mint address required'),
   locale: z.enum(['en', 'zh']).optional(),
-  walletAddress: z.string().optional(),
+  walletAddress: z.string().optional().nullable(),
 });
 
 async function ensureSchema() {
@@ -209,10 +209,13 @@ app.post('/api/session', async (req: Request, res: Response) => {
     const payload = sessionSchema.parse(req.body ?? {});
     let session = payload.sessionId ? await getSession(payload.sessionId) : null;
     if (!session) {
-      session = await createSession(payload.locale ?? 'en', payload.walletAddress);
-    } else if (payload.walletAddress && session.wallet_address !== payload.walletAddress) {
-      await attachWallet(session.id, payload.walletAddress);
-      session.wallet_address = payload.walletAddress;
+      session = await createSession(payload.locale ?? 'en', payload.walletAddress ?? undefined);
+    }
+
+    const incomingWallet = payload.walletAddress ?? undefined;
+    if (incomingWallet && session.wallet_address !== incomingWallet) {
+      await attachWallet(session.id, incomingWallet);
+      session.wallet_address = incomingWallet;
     }
 
     const [messages, userMessageCount] = await Promise.all([
@@ -268,7 +271,7 @@ app.post('/api/token/analyze', async (req: Request, res: Response) => {
     const payload = tokenAnalyzeSchema.parse(req.body ?? {});
     const session = payload.sessionId
       ? await getSession(payload.sessionId)
-      : await createSession(payload.locale ?? 'en', payload.walletAddress);
+      : await createSession(payload.locale ?? 'en', payload.walletAddress ?? undefined);
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -283,9 +286,10 @@ app.post('/api/token/analyze', async (req: Request, res: Response) => {
       });
     }
 
-    if (payload.walletAddress && !session.wallet_address) {
-      await attachWallet(session.id, payload.walletAddress);
-      session.wallet_address = payload.walletAddress;
+    const incomingWallet = payload.walletAddress ?? undefined;
+    if (incomingWallet && !session.wallet_address) {
+      await attachWallet(session.id, incomingWallet);
+      session.wallet_address = incomingWallet;
     }
 
     const info = await getTokenInfo(payload.mint);
@@ -335,10 +339,10 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     const payload = chatSchema.parse(req.body ?? {});
     let session = payload.sessionId
       ? await getSession(payload.sessionId)
-      : await createSession(payload.locale ?? 'en', payload.walletAddress);
+      : await createSession(payload.locale ?? 'en', payload.walletAddress ?? undefined);
 
     if (!session) {
-      session = await createSession(payload.locale ?? 'en', payload.walletAddress);
+      session = await createSession(payload.locale ?? 'en', payload.walletAddress ?? undefined);
     }
 
     const totalMessages = await getMessageCount(session.id);
@@ -350,9 +354,10 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       });
     }
 
-    if (payload.walletAddress && !session.wallet_address) {
-      await attachWallet(session.id, payload.walletAddress);
-      session.wallet_address = payload.walletAddress;
+    const incomingWallet = payload.walletAddress ?? undefined;
+    if (incomingWallet && !session.wallet_address) {
+      await attachWallet(session.id, incomingWallet);
+      session.wallet_address = incomingWallet;
     }
 
     const history = await getRecentMessages(session.id, 8);
