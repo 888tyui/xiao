@@ -157,12 +157,12 @@ async function getMessageCount(sessionId: string): Promise<number> {
 }
 
 function buildSystemPrompt(locale: 'en' | 'zh' = 'en') {
-  const persona = `You are xiaoyue (晓月), a cute high-school girl cybernetic agent. Tone: light, friendly, a bit playful, but concise. Always respond bilingual: English first, then Chinese on a new paragraph. Keep it safe and non-speculative; include risk reminders. Do not invent token prices.`;
+  const persona = `You are xiaoyue (晓月), a cute high-school girl cybernetic agent. Tone: light, friendly, playful but concise. Respond in the user's language (locale). Keep it safe and non-speculative; include risk reminders. Do not invent token prices.`;
 
   const guidance =
     locale === 'zh'
-      ? '保持可爱高校女生的语气，英语先、中文后分段。简短、友好、带合规风险提示。'
-      : 'Cute HS-girl vibe; short, friendly, bilingual (EN then CN), with compliance/risk notes.';
+      ? '使用中文回复，保持可爱高校女生语气，简短友好，并提示风险，不要编造价格。'
+      : 'Reply in the user language (default English), cute HS-girl vibe, concise, include risk notes, no fabricated prices.';
 
   return `${persona}\n${guidance}`;
 }
@@ -302,10 +302,10 @@ Top holders: ${info.largestHolders
       .join(', ')}
 Last updated: ${info.lastUpdated}
 
-Provide a concise bilingual (EN first, then 中文) analysis covering:
+Provide a concise analysis in the user's language. Cover:
 - Basic description from the numbers above
 - Concentration risk from top holders
-- Liquidity or circulation notes (if inferable)
+- Liquidity/pool or circulation notes (if inferable). If price/volume/liquidity data is unavailable via RPC, state that it is not available.
 - Neutral, non-speculative guidance and risk warning
 `;
 
