@@ -29,6 +29,14 @@ const moodMap = {
   shy: { label: 'Shy', labelZh: '害羞', color: '#a855f7' },
 };
 
+const moodImageMap: Record<keyof typeof moodMap, string> = {
+  joy: '/happy.png',
+  neutral: '/chill.png',
+  sad: '/sad.png',
+  angry: '/angry.png',
+  shy: '/shy.png',
+};
+
 function shortAddress(addr?: string | null) {
   if (!addr) return '';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
@@ -239,7 +247,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="brand">✦ xiaoyue</div>
         <div className="mood-block">
-          <img src="/agent-placeholder.svg" alt="xiaoyue mood" />
+          <img src={moodImageMap[moodKey]} alt="xiaoyue mood" />
           <div className="mood-text">
             <div className="eyebrow">{t('mood')}</div>
             <div className="mood-line">
